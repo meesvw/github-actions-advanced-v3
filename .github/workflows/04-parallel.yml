@@ -47,8 +47,10 @@ jobs:
         working-directory: app
       - parallel:
         - name: App lint
+          working-directory: app
           run: npm run lint
         - name: App test
+          working-directory: app
           run: npm test
 #      - name: Complete independent parallel checks
         # TODO: Replace this placeholder with a `parallel:` group on this runner.
