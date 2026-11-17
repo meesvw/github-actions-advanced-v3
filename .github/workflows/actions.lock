@@ -16,6 +16,9 @@ workflows:
         - 'actions/setup-node@v7.1.0'
     '.github/workflows/04-issues-all.yml': []
     '.github/workflows/04-issues-filtered.yml': []
+    '.github/workflows/04-parallel.yml':
+        - 'actions/checkout@v7.0.1'
+        - 'actions/setup-node@v7.1.0'
 dependencies:
     'actions/cache@v6.1.0':
         ref: 'v6.1.0'
