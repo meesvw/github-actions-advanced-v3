@@ -9,7 +9,7 @@ on:
       - 'examples/workflows/02-cache-main.yml'
       - '.github/workflows/actions.lock'
 permissions: {}
-cache-mode: read
+cache-mode: write
 concurrency:
   group: lab-cache-writer-${{ github.ref }}
   cancel-in-progress: false
