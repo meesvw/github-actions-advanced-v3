@@ -42,7 +42,7 @@ jobs:
         with:
           path: .cache/codeql-downloads
           key: ${{runner.os}}-${{runner.arch}}-codeql-v1-${{hashFiles('examples/codeql-bundle.json')}}
-        restore-keys: ${{runner.os}}-${{runner.arch}}-codeql-v1-
+          restore-keys: ${{runner.os}}-${{runner.arch}}-codeql-v1-
       - name: Download only if absent; verify every archive before use
         id: bundle
         run: node tools/prepare-codeql.mjs
