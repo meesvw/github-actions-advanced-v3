@@ -67,11 +67,11 @@ jobs:
       - run: npm run build
         working-directory: app
   separate-runners:
-    runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
     steps:
@@ -86,12 +86,10 @@ jobs:
         working-directory: app
 
       - name: App lint
-        runs-on: ${{ matrix.os }}
         working-directory: app
         run: npm run lint
 
       - name: App test
-        runs-on: ${{ matrix.os }}
         working-directory: app
         run: npm test
 #      - name: Complete isolated checks
