@@ -1,0 +1,20 @@
+name: Lab 04 selected issue activities
+on:
+  issues:
+    # TODO: Add the issue activity filter here so this workflow runs only when
+    # an issue is created or edited. Use the activity names from the linked
+    # issues-event documentation in Lab 4. Leave the broad observer unchanged.
+    # Before testing, predict which observer runs for opening, editing, labeling
+    # and commenting on your test issue. Then compare with the run list.
+permissions: {}
+cache-mode: none
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Report only allowlisted activity metadata
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+        run: printf 'event=%s activity=%s\n' "$EVENT_NAME" "$EVENT_ACTION"
