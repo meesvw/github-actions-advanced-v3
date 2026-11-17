@@ -1,0 +1,26 @@
+name: Lab 07 targeted diagnostics
+on:
+  workflow_dispatch:
+permissions: {}
+cache-mode: none
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      # TODO: Run this starter and inspect the failing source-file check below.
+      # Add a small diagnostic step to show the working directory and relevant
+      # file names, so you can explain why the check fails. Do not print the whole
+      # environment, secrets or event payload. Then repair the cause and commit
+      # the correction. Run that new revision; rerunning the old run uses old code.
+      - name: Check expected source
+        run: test -f app/src/serve.js

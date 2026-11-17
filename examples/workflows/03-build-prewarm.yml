@@ -1,0 +1,49 @@
+name: Lab 03 build prewarmed image
+on:
+  workflow_dispatch:
+permissions: {}
+cache-mode: none
+concurrency:
+  group: lab-03-image-build
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: actions-advanced-lab3-imagegen
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    snapshot:
+      image-name: actions-advanced-lab3-prewarm
+      version: 1.*
+    steps:
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Seed the npm package cache
+        # TODO: Replace this placeholder with commands that download
+        # picocolors version 1.1.1 into npm's download cache, then list the
+        # matching cache entry so you can check that it is present.
+        # Do not install the package into a project or cache node_modules.
+        # Finish this download before the snapshot; the consumer will check
+        # that the saved package can be used without another download.
+        run: |
+          echo 'TODO: Download picocolors version 1.1.1 into the npm cache and show its cache entry before snapshotting.' >&2
+          exit 1
+      - name: Pre-pull a Docker image
+        # TODO: Replace this placeholder with commands that download node:latest
+        # into the builder's Docker image store and print its image ID or digest.
+        # This download must finish before the runner snapshot is created.
+        # In the later consumer job, prove the image was saved by running it
+        # without allowing another download. See Lab 3 for the offline check.
+        run: |
+          echo 'TODO: Pull node:latest and record its image identity before snapshotting.' >&2
+          exit 1
+      # TODO (optional): Add the extension lifecycle steps described in Lab 3.
+      # Install the reviewed extension, download the reviewed changed-files
+      # commit into the runner's action archive cache, then uninstall.
+      # Use separate steps and run cleanup with always() after a successful
+      # installation, even if the download fails. Do not use continue-on-error.
+      # Keep tokens step-scoped and do not save a login in the image.
+      # Do not remove an extension that someone else already installed.

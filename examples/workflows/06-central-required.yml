@@ -1,0 +1,29 @@
+name: Lab 06 central required policy
+# Central metadata policy applies regardless of changed paths.
+# Keep required workflow evidence present; install only for Lab 6.
+on:
+  pull_request:
+  merge_group:
+permissions: {}
+cache-mode: none
+jobs:
+  central-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validate the PR title without checking out code
+        # TODO: Complete this step (Lab 6, setup step 2).
+        # - Add an `env:` mapping that sets TITLE from the pull request title in
+        #   the github context. The script below reads TITLE from the environment.
+        # - Add an `if:` condition so the step runs only for pull_request events.
+        #   A merge_group event has no PR title, so the job should pass there.
+        # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#github-context
+        shell: python
+        run: |
+          import os
+          title = os.environ.get("TITLE")
+          if title is None:
+              raise SystemExit("TITLE is not set. Map it from the pull request title in env:.")
+          if not title.strip() or len(title) > 120:
+              raise SystemExit("Use a nonempty PR title of at most 120 characters")
+          print("PR title policy satisfied")

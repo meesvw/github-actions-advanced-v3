@@ -1,0 +1,89 @@
+name: Lab 06 explicit required gate
+# Always emit the required gate; impact selects application work inside the run.
+# Trigger paths would leave docs-only required checks pending.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  merge_group:
+    types: [checks_requested]
+permissions: {}
+cache-mode: read
+jobs:
+  impact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      # Zero selected files means docs-only; otherwise run application checks.
+      checks: ${{ steps.impact.outputs.all_changed_and_modified_files_count != '0' }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Find changes that require application checks
+        id: impact
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          # Compare the event's base with the combined revision being tested.
+          # For a PR this is its merge commit; for a queue it is the merge group.
+          base_sha: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
+          sha: ${{ github.sha }}
+          # Checkout above provides history; no extra fetch or saved credentials.
+          skip_initial_fetch: 'true'
+          fail_on_initial_diff_error: 'true'
+          # Count both sides of a rename so moving code to a .md file cannot skip checks.
+          output_renamed_files_as_deleted_and_added: 'true'
+          # Select everything, exclude Markdown, then include all .github files.
+          files: |
+            **
+            !**/*.md
+            .github/**
+  application:
+    needs: impact
+    if: needs.impact.outputs.checks == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts && npm run lint && npm test
+        working-directory: app
+  required:
+    if: always()
+    needs: [impact, application]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # Each step fails only when its condition finds a problem.
+      # A failed step skips the steps after it, so the job fails.
+      - name: Change detection must succeed
+        if: needs.impact.result != 'success'
+        run: |
+          echo '::error::Change detection did not succeed, so the gate cannot decide which checks were needed.'
+          exit 1
+      - name: The impact decision must be true or false
+        if: needs.impact.outputs.checks != 'true' && needs.impact.outputs.checks != 'false'
+        run: |
+          echo '::error::The impact decision is missing or has an unexpected value.'
+          exit 1
+      - name: Needed application checks must pass
+        if: needs.impact.outputs.checks == 'true' && needs.application.result != 'success'
+        run: |
+          echo '::error::Application checks were needed but did not succeed.'
+          exit 1
+      - name: Unneeded application checks must be skipped
+        if: needs.impact.outputs.checks == 'false' && needs.application.result != 'skipped'
+        run: |
+          echo '::error::Application checks were not needed, so they should have been skipped.'
+          exit 1
+      - name: All gate conditions are satisfied
+        run: echo 'Detection succeeded and every needed check passed.'

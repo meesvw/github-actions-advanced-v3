@@ -1,0 +1,54 @@
+name: Lab 05 stack and queue
+# Required layer/queue evidence must not disappear behind trigger path filters.
+# Install only for Lab 5; merge_group does not support paths.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  merge_group:
+    types: [checks_requested]
+permissions: {}
+cache-mode: read
+# TODO: Add a workflow-level `concurrency:` block (Lab 5, task 1).
+# - Put the event name and the PR number in the group, so two runs for the
+#   same PR share a group, and runs for other PRs do not. A merge_group event
+#   has no PR number, so use the run ID there instead.
+# - Cancel the older run only for pull_request events, never for merge_group.
+# https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Record tested revision and wait so you can cancel it
+        env:
+          TESTED_SHA: ${{ github.sha }}
+          BASE_SHA: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          DELAY_SECONDS: ${{ vars.LAB_STACK_DELAY_SECONDS || '0' }}
+        run: |
+          printf 'event=%s tested_sha=%s base_sha=%s\n' "$EVENT_NAME" "$TESTED_SHA" "$BASE_SHA"
+          if [[ ! "$DELAY_SECONDS" =~ ^[0-9]+$ ]] || (( DELAY_SECONDS > 150 )); then
+            echo "::error::LAB_STACK_DELAY_SECONDS must be an integer from 0 to 150"
+            exit 1
+          fi
+          printf 'Waiting %s seconds before validation (cancellation exercise).\n' "$DELAY_SECONDS"
+          sleep "$DELAY_SECONDS"
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+        working-directory: app
+      - run: npm test
+        working-directory: app
+  optional-top-layer:
+    if: github.event_name == 'pull_request' && github.event.pull_request.stack != null && github.event.pull_request.stack.position == github.event.pull_request.stack.size
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: echo 'Optional top-layer report; never configure this as the required validation check.'

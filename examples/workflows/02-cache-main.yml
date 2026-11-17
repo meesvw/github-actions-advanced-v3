@@ -1,0 +1,58 @@
+name: Lab 02 trusted cache writer
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/codeql-bundle.json'
+      - 'tools/prepare-codeql.mjs'
+      - '.github/workflows/02-cache-main.yml'
+      - 'examples/workflows/02-cache-main.yml'
+      - '.github/workflows/actions.lock'
+permissions: {}
+cache-mode: write
+concurrency:
+  group: lab-cache-writer-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  populate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      # TODO: Add a cache restore step here, before the CodeQL preparation step.
+      # Restore only .cache/codeql-downloads, which holds downloaded archives.
+      # Design a key using the runner OS, architecture, tool name, your cache
+      # version label and the hash of examples/codeql-bundle.json.
+      # Add a fallback prefix that keeps the same platform, tool and cache version.
+      # Give the restore step an id so the later save can read its lookup outputs.
+      # Keep preparation, checksum verification and extraction on every run,
+      # even when the cache key matches exactly. See Lab 2 for the experiments.
+      - name: Download only if absent; verify every archive before use
+        id: bundle
+        run: node tools/prepare-codeql.mjs
+      - name: Extract outside the cache and smoke-test this exact bundle
+        env:
+          ARCHIVE: ${{ steps.bundle.outputs.archive }}
+        shell: bash
+        run: |
+          mkdir "$RUNNER_TEMP/lab02-codeql"
+          time tar --zstd -xf "$ARCHIVE" -C "$RUNNER_TEMP/lab02-codeql"
+          "$RUNNER_TEMP/lab02-codeql/codeql/codeql" version
+      - name: Complete trusted cache population
+        # TODO: Replace this placeholder with a cache save step.
+        # Save the download directory only after all steps above have succeeded.
+        # Do not save when restore found the exact primary key; save after a
+        # partial match or a miss, using the restore step's primary key output.
+        # Keep the job's main-branch restriction. The PR workflow must not save.
+        run: |
+          echo 'TODO: Save verified CodeQL downloads after a successful smoke test unless the primary key matched exactly.' >&2
+          exit 1

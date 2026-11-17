@@ -1,0 +1,54 @@
+name: Lab 02 PR restore only
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'examples/codeql-bundle.json'
+      - 'tools/prepare-codeql.mjs'
+      - '.github/workflows/02-cache-pr.yml'
+      - 'examples/workflows/02-cache-pr.yml'
+      - '.github/workflows/actions.lock'
+permissions: {}
+cache-mode: read
+concurrency:
+  group: lab-cache-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      # TODO: Add a cache restore step here, before CodeQL preparation.
+      # Use the same download directory, key design and fallback prefix as the
+      # main-branch writer so this PR can reuse its compatible archive downloads.
+      # Give the restore step an id so you can report its lookup outputs below.
+      # Keep checksum verification and extraction on every run, including exact hits.
+      # This job may only restore caches: do not add a save step or enable writes.
+      - name: Download only if absent; verify every archive before use
+        id: bundle
+        run: node tools/prepare-codeql.mjs
+      - name: Extract outside the cache and smoke-test this exact bundle
+        env:
+          ARCHIVE: ${{ steps.bundle.outputs.archive }}
+        shell: bash
+        run: |
+          mkdir "$RUNNER_TEMP/lab02-codeql"
+          time tar --zstd -xf "$ARCHIVE" -C "$RUNNER_TEMP/lab02-codeql"
+          "$RUNNER_TEMP/lab02-codeql/codeql/codeql" version
+      - name: Complete restore-only reuse
+        # TODO: Replace this placeholder with a step that reports whether restore
+        # found an exact key, a fallback key, or no cache. Use the restore outputs,
+        # not just the job's success status. Do not skip CodeQL preparation above.
+        # Lab 2 explains which file edits produce each result.
+        run: |
+          echo 'TODO: Add restore-only caching and report exact, partial or missing results without skipping verification or extraction.' >&2
+          exit 1
