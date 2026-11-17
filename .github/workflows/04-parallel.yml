@@ -24,11 +24,10 @@ jobs:
           package-manager-cache: false
       - run: npm ci --ignore-scripts
         working-directory: app
-      - parallel:
-        - run: npm run lint
-          working-directory: app
-        - run: npm test
-          working-directory: app
+      - run: npm run lint
+        working-directory: app
+      - run: npm test
+        working-directory: app
       - run: npm run build
         working-directory: app
   shared-runner:
@@ -46,7 +45,12 @@ jobs:
           package-manager-cache: false
       - run: npm ci --ignore-scripts
         working-directory: app
-      - name: Complete independent parallel checks
+      - parallel:
+        - name: App lint
+          run: npm run lint
+        - name: App test
+          run: npm test
+#      - name: Complete independent parallel checks
         # TODO: Replace this placeholder with a `parallel:` group on this runner.
         # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepsparallel
         # Run the app's lint command and test command at the same time.
@@ -55,9 +59,9 @@ jobs:
         # true, then deliberately fail that branch so you can check that the
         # build is skipped. Do not hide the failure or install packages in parallel.
         # Keep the sequential job unchanged as the comparison. See Lab 4.
-        run: |
-          echo 'TODO: Run lint and tests concurrently, propagate fail-test and wait for both before building.' >&2
-          exit 1
+#        run: |
+#          echo 'TODO: Run lint and tests concurrently, propagate fail-test and wait for both before building.' >&2
+#          exit 1
       - run: npm run build
         working-directory: app
   separate-runners:
